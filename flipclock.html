@@ -5,262 +5,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flip Clock - IST</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&display=swap');
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        /* Basic font fallback for iPad Mini 1 */
         body {
-            font-family: 'Noto Sans JP', sans-serif;
-            background: #000000;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #000;
+            color: #fff;
             height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             overflow: hidden;
-            color: white;
         }
-        
-        .container {
-            text-align: center;
-            width: 100%;
-            padding: 2rem;
-        }
-        
-        .date-display {
-            font-size: 2.5rem;
-            margin-bottom: 3rem;
-            font-weight: 300;
-            color: #ffffff;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-        
-        .clock-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-        
+        .container { text-align: center; width: 100%; }
+        .date-display { font-size: 2rem; margin-bottom: 2rem; }
+        .clock-container { display: flex; justify-content: center; align-items: center; gap: 1rem; }
         .time-unit {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 2rem 1.5rem;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(255, 255, 255, 0.05);
-            min-width: 120px;
-            transition: all 0.3s ease;
+            background: #222;
+            border-radius: 14px;
+            padding: 1.5rem 1rem;
+            min-width: 70px;
+            border: 1px solid #333;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+            margin: 0 0.1rem;
         }
-        
-        .time-unit.ampm {
-            background: rgba(255, 255, 255, 0.15);
-            min-width: 100px;
-        }
-        
-        .digit {
-            font-size: 5rem;
-            font-weight: 700;
-            line-height: 1;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            color: #ffffff;
-        }
-        
-        .ampm-text {
-            font-size: 3rem;
-            font-weight: 400;
-            line-height: 1;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            color: #ffffff;
-        }
-        
-        .separator {
-            font-size: 5rem;
-            font-weight: 700;
-            color: #ffffff;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            animation: blink 1s infinite;
-        }
-        
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0.3; }
-        }
-        
-        /* Flip animation */
-        .flip {
-            animation: flipAnimation 0.6s ease-in-out;
-        }
-        
-        @keyframes flipAnimation {
-            0% { transform: rotateX(0); }
-            50% { transform: rotateX(-90deg); }
-            100% { transform: rotateX(0); }
-        }
-        
-        /* Responsive design for iPad Mini */
-        @media (max-width: 768px) {
-            .digit {
-                font-size: 4rem;
-            }
-            
-            .ampm-text {
-                font-size: 2.5rem;
-            }
-            
-            .separator {
-                font-size: 4rem;
-            }
-            
-            .time-unit {
-                padding: 1.5rem 1rem;
-                min-width: 100px;
-            }
-            
-            .time-unit.ampm {
-                min-width: 80px;
-            }
-            
-            .date-display {
-                font-size: 2rem;
-                margin-bottom: 2rem;
-            }
-            
-            .clock-container {
-                gap: 1rem;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .digit {
-                font-size: 3rem;
-            }
-            
-            .ampm-text {
-                font-size: 2rem;
-            }
-            
-            .separator {
-                font-size: 3rem;
-            }
-            
-            .time-unit {
-                padding: 1rem 0.8rem;
-                min-width: 80px;
-            }
-            
-            .time-unit.ampm {
-                min-width: 70px;
-            }
-            
-            .date-display {
-                font-size: 1.5rem;
-            }
+        .ampm { min-width: 55px; }
+        .digit { font-size: 3rem; font-weight: bold; color: #fff; }
+        .ampm-text { font-size: 1.6rem; }
+        .separator { font-size: 2.7rem; }
+        /* Responsive adjustments */
+        @media (max-width:768px){
+            .digit { font-size: 2.4rem; }
+            .date-display { font-size: 1.2rem; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="date-display" id="dateDisplay"></div>
-        
         <div class="clock-container">
-            <div class="time-unit">
-                <div class="digit" id="hours">00</div>
-            </div>
+            <div class="time-unit"><div class="digit" id="hours">00</div></div>
             <div class="separator">:</div>
-            <div class="time-unit">
-                <div class="digit" id="minutes">00</div>
-            </div>
+            <div class="time-unit"><div class="digit" id="minutes">00</div></div>
             <div class="separator">:</div>
-            <div class="time-unit">
-                <div class="digit" id="seconds">00</div>
-            </div>
-            <div class="time-unit ampm">
-                <div class="ampm-text" id="ampm">AM</div>
-            </div>
+            <div class="time-unit"><div class="digit" id="seconds">00</div></div>
+            <div class="time-unit ampm"><div class="ampm-text" id="ampm">AM</div></div>
         </div>
     </div>
-
     <script>
-        function updateClock() {
-            // Create date object for IST
-            const now = new Date();
-            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const istTime = new Date(utc + (330 * 60000)); // IST is UTC+5:30
-            
-            // Convert to 12-hour format
-            let hours = istTime.getHours();
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            hours = hours % 12;
-            hours = hours ? hours : 12; // 0 should be 12
-            
-            const formattedHours = String(hours).padStart(2, '0');
-            const minutes = String(istTime.getMinutes()).padStart(2, '0');
-            const seconds = String(istTime.getSeconds()).padStart(2, '0');
-            
-            // Get elements
-            const hoursElement = document.getElementById('hours');
-            const minutesElement = document.getElementById('minutes');
-            const secondsElement = document.getElementById('seconds');
-            const ampmElement = document.getElementById('ampm');
-            
-            // Add flip animation when time changes
-            if (hoursElement.textContent !== formattedHours) {
-                hoursElement.classList.add('flip');
-                setTimeout(() => hoursElement.classList.remove('flip'), 600);
-            }
-            if (minutesElement.textContent !== minutes) {
-                minutesElement.classList.add('flip');
-                setTimeout(() => minutesElement.classList.remove('flip'), 600);
-            }
-            if (secondsElement.textContent !== seconds) {
-                secondsElement.classList.add('flip');
-                setTimeout(() => secondsElement.classList.remove('flip'), 600);
-            }
-            if (ampmElement.textContent !== ampm) {
-                ampmElement.classList.add('flip');
-                setTimeout(() => ampmElement.classList.remove('flip'), 600);
-            }
-            
-            // Update display
-            hoursElement.textContent = formattedHours;
-            minutesElement.textContent = minutes;
-            secondsElement.textContent = seconds;
-            ampmElement.textContent = ampm;
-            
-            // Update date
-            const options = { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            };
-            document.getElementById('dateDisplay').textContent = 
-                istTime.toLocaleDateString('en-IN', options);
+        // Polyfill for padStart for older Safari
+        function pad(num) {
+            num = String(num);
+            return num.length < 2 ? '0' + num : num;
         }
-        
-        // Update immediately and then every second
+        function updateClock() {
+            var now = new Date();
+            var utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            var istTime = new Date(utc + (330 * 60000));
+            var hours = istTime.getHours();
+            var ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            var formattedHours = pad(hours);
+            var minutes = pad(istTime.getMinutes());
+            var seconds = pad(istTime.getSeconds());
+            document.getElementById('hours').textContent = formattedHours;
+            document.getElementById('minutes').textContent = minutes;
+            document.getElementById('seconds').textContent = seconds;
+            document.getElementById('ampm').textContent = ampm;
+
+            var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+            var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+            var day = days[istTime.getDay()];
+            var date = istTime.getDate();
+            var month = months[istTime.getMonth()];
+            var year = istTime.getFullYear();
+            document.getElementById('dateDisplay').textContent =
+                day + ', ' + date + ' ' + month + ' ' + year;
+        }
         updateClock();
         setInterval(updateClock, 1000);
-        
-        // Prevent screen from sleeping
-        function preventSleep() {
-            const video = document.createElement('video');
-            video.src = 'data:video/mp4;base64,AAAAHGZ0eXBpc29tAAACAGlzb21pc28ybXA0MQAAAAhmcmVlAAAACm1kYXQAAAANBgX//wAAADV0cmFrAAAAXHRraGQAAAADAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAEdlZHRzAAAAP2VkdHMAAAAwZWxzdAAAAAAAAAABAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAEAAAABAAAABGxkdHMAAAAURHJlZgAAAAAAAAABAAAADBhkZWYAAAAABBgKAAAANHN0YmwAAAAAFHN0c2QAAAAAAAAAAQAAAAQAAAAUc3RzcwAAAAAAAAABAAAAABAAAAASc3RzegAAAAAAAAAAEAAAABRzdGNvAAAAAAAAAAEAAAABGgFkYXRhAAAAGgABABsTAAAABBgK'; 
-            video.loop = true;
-            video.muted = true;
-            video.play().catch(() => {});
-        }
-        
-        preventSleep();
-        document.addEventListener('click', preventSleep);
-        document.addEventListener('touchstart', preventSleep);
+
+        // Remove preventSleep, as it will not work reliably on iOS 9 Safari
     </script>
 </body>
 </html>
