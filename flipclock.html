@@ -12,14 +12,12 @@
     height: 100vh;
     margin: 0; padding: 0;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
   }
   .container {
     text-align: center;
-    width: 300px;
     margin: 1rem;
   }
   .date-display {
@@ -31,6 +29,7 @@
     justify-content: center;
     align-items: center;
     gap: 0.8rem;
+    margin-bottom: 2rem;
   }
   .time-unit {
     background: #222;
@@ -46,6 +45,7 @@
     font-size: 2.6rem;
     font-weight: bold;
     color: #fff;
+    user-select: none;
   }
   .ampm-text {
     font-size: 1.4rem;
@@ -54,39 +54,64 @@
     font-size: 2.1rem;
     line-height: 1;
     margin: 0 0.15rem;
+    user-select: none;
   }
-  /* Sidebar for sitting time and controls - adjusted margin-left to prevent overlap */
-  .sidebar {
-    width: 220px;
-    background: #111;
-    border-radius: 14px;
-    padding: 1rem;
-    margin-left: 2.5rem; /* Increased margin to move sidebar right */
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  }
-  .sidebar h2 {
-    font-size: 1.3rem;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid #444;
-    padding-bottom: 0.4rem;
-  }
-  .time-display {
-    font-size: 2.5rem;
-    font-weight: bold;
-    margin: 0.8rem 0 1.5rem 0;
+
+  /* Sitting time container below main clock */
+  .sitting-container {
     text-align: center;
+    margin-bottom: 1rem;
+  }
+  .sitting-label {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    font-weight: normal;
+  }
+  .sitting-time-display {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .sitting-time-unit {
+    background: #222;
+    border-radius: 14px;
+    padding: 1rem 0.8rem;
+    min-width: 50px;
+    border: 1px solid #333;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+  }
+  .sitting-digit {
+    font-size: 2.2rem;
+    font-weight: bold;
     color: #0f0;
+    user-select: none;
+  }
+  .sitting-separator {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #0f0;
+    user-select: none;
+    line-height: 1;
+  }
+
+  /* Buttons row below sitting time */
+  .buttons-row {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 0.8rem;
   }
   button {
-    width: 100%;
-    padding: 0.6rem 0;
-    font-size: 1.1rem;
-    margin-bottom: 0.7rem;
+    padding: 0.5rem 0.9rem;
+    font-size: 1rem;
     border: none;
     border-radius: 10px;
     background: #333;
     color: #fff;
     cursor: pointer;
+    user-select: none;
+    min-width: 70px;
   }
   button:hover {
     background: #0a0;
@@ -101,170 +126,194 @@
 </style>
 </head>
 <body>
-  <div class="container">
-    <div class="date-display" id="dateDisplay"></div>
-    <div class="clock-container">
-      <div class="time-unit"><div class="digit" id="hours">00</div></div>
-      <div class="separator">:</div>
-      <div class="time-unit"><div class="digit" id="minutes">00</div></div>
-      <div class="separator">:</div>
-      <div class="time-unit"><div class="digit" id="seconds">00</div></div>
-      <div class="time-unit ampm"><div class="ampm-text" id="ampm">AM</div></div>
+
+<div class="container">
+  <div class="date-display" id="dateDisplay"></div>
+  <div class="clock-container">
+    <div class="time-unit"><div class="digit" id="hours">00</div></div>
+    <div class="separator">:</div>
+    <div class="time-unit"><div class="digit" id="minutes">00</div></div>
+    <div class="separator">:</div>
+    <div class="time-unit"><div class="digit" id="seconds">00</div></div>
+    <div class="time-unit ampm"><div class="ampm-text" id="ampm">AM</div></div>
+  </div>
+
+  <!-- Sitting Time below main clock -->
+  <div class="sitting-container">
+    <div class="sitting-label">Elapsed Sitting Time:</div>
+    <div class="sitting-time-display" id="sittingTimeDisplay">
+      <div class="sitting-time-unit"><div class="sitting-digit" id="sit-hrs">00</div></div>
+      <div class="sitting-separator">:</div>
+      <div class="sitting-time-unit"><div class="sitting-digit" id="sit-mins">00</div></div>
+      <div class="sitting-separator">:</div>
+      <div class="sitting-time-unit"><div class="sitting-digit" id="sit-secs">00</div></div>
     </div>
   </div>
-  <div class="sidebar">
-    <h2>Sitting Time Tracker</h2>
-    <div>Elapsed Sitting Time:</div>
-    <div class="time-display" id="sittingTime">00:00:00</div>
+
+  <!-- Controls buttons in a row below sitting time -->
+  <div class="buttons-row">
     <button id="startSittingBtn">Start Sitting</button>
     <button id="breakBtn" disabled>Break</button>
     <button id="endBtn" disabled>End</button>
   </div>
+</div>
 
-  <!-- Click sound (tiny click) -->
-  <audio id="clickSound" preload="auto">
-    <source src="data:audio/wav;base64,UklGRjQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YYAAAP8AAP//AAD/AAAA/wAA//8AAP8A/wAA/wAA///AAD/+AAD//wAA" type="audio/wav" />
-  </audio>
+<!-- Click sound -->
+<audio id="clickSound" preload="auto">
+  <source src="data:audio/wav;base64,UklGRjQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YYAAAP8AAP//AAD/AAAA/wAA//8AAP8A/wAA/wAA///AAD/+AAD//wAA" type="audio/wav" />
+</audio>
 
-  <script>
-    // Pad helper for older Safari
-    function pad(num) {
-      num = String(num);
-      return num.length < 2 ? '0' + num : num;
+<script>
+  // Pad helper for older Safari
+  function pad(num) {
+    num = String(num);
+    return num.length < 2 ? '0' + num : num;
+  }
+
+  // Variables for clock and sitting tracker
+  var lastHour = null;
+  var sitStartTime = null;
+  var sittingInterval = null;
+  var isSitting = false;
+  var pausedTime = 0;      // total paused duration in ms
+  var breakActive = false; // true if currently on break
+
+  // Update IST clock and date
+  function updateClock() {
+    var now = new Date();
+    var utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    var istTime = new Date(utc + (330 * 60000));
+    var hours = istTime.getHours();
+    var ampm = hours >= 12 ? 'PM' : 'AM';
+    var displayHour = hours % 12;
+    displayHour = displayHour ? displayHour : 12;
+
+    document.getElementById('hours').textContent = pad(displayHour);
+    document.getElementById('minutes').textContent = pad(istTime.getMinutes());
+    document.getElementById('seconds').textContent = pad(istTime.getSeconds());
+    document.getElementById('ampm').textContent = ampm;
+
+    var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var day = days[istTime.getDay()];
+    var date = istTime.getDate();
+    var month = months[istTime.getMonth()];
+    var year = istTime.getFullYear();
+    document.getElementById('dateDisplay').textContent =
+      day + ', ' + date + ' ' + month + ' ' + year;
+
+    // Play click sound on every hour change
+    if (lastHour === null) {
+      lastHour = hours;
+    } else if (hours !== lastHour) {
+      var sound = document.getElementById('clickSound');
+      try { sound.currentTime = 0; } catch(e) {}
+      sound.play();
+      lastHour = hours;
+    }
+  }
+
+  // Update sitting time display
+  function updateSittingTime() {
+    if (!sitStartTime || (!isSitting && !breakActive)) {
+      setSittingTimeDisplay(0, 0, 0);
+      return;
+    }
+    var now = new Date();
+    var elapsed;
+    if (breakActive && !isSitting) {
+      // On break: show time up to break start (pausedTime only)
+      elapsed = pausedTime;
+    } else {
+      // Calculate elapsed sitting time excluding breaks
+      elapsed = now.getTime() - sitStartTime.getTime() + pausedTime;
     }
 
-    // Variables for clock and sitting tracker
-    var lastHour = null;
-    var sitStartTime = null;
-    var sittingInterval = null;
-    var isSitting = false;
-    var pausedTime = 0;      // total paused duration in ms
-    var breakActive = false; // true if currently on break
+    var hrs = Math.floor(elapsed / (1000 * 60 * 60));
+    var mins = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60));
+    var secs = Math.floor((elapsed % (1000 * 60)) / 1000);
+    setSittingTimeDisplay(hrs, mins, secs);
+  }
 
-    // Update IST clock and date
-    function updateClock() {
+  // Display sitting digits individually for flip-style
+  function setSittingTimeDisplay(h, m, s) {
+    document.getElementById('sit-hrs').textContent = pad(h);
+    document.getElementById('sit-mins').textContent = pad(m);
+    document.getElementById('sit-secs').textContent = pad(s);
+  }
+
+  // Get buttons
+  var startBtn = document.getElementById('startSittingBtn');
+  var breakBtn = document.getElementById('breakBtn');
+  var endBtn = document.getElementById('endBtn');
+
+  // Start Sitting Button
+  startBtn.onclick = function() {
+    if (!isSitting) {
+      sitStartTime = new Date();
+      isSitting = true;
+      breakActive = false;
+      pausedTime = 0;
+      startBtn.disabled = true;
+      breakBtn.disabled = false;
+      breakBtn.textContent = "Break";
+      endBtn.disabled = false;
+      sittingInterval = setInterval(updateSittingTime, 1000);
+      updateSittingTime();
+    }
+  };
+
+  // Break / Resume Button toggle
+  breakBtn.onclick = function() {
+    if (!breakActive) {
+      // Start Break (pause)
+      breakActive = true;
+      clearInterval(sittingInterval);
       var now = new Date();
-      var utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-      var istTime = new Date(utc + (330 * 60000));
-      var hours = istTime.getHours();
-      var ampm = hours >= 12 ? 'PM' : 'AM';
-      var displayHour = hours % 12;
-      displayHour = displayHour ? displayHour : 12;
-
-      document.getElementById('hours').textContent = pad(displayHour);
-      document.getElementById('minutes').textContent = pad(istTime.getMinutes());
-      document.getElementById('seconds').textContent = pad(istTime.getSeconds());
-      document.getElementById('ampm').textContent = ampm;
-
-      var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-      var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-      var day = days[istTime.getDay()];
-      var date = istTime.getDate();
-      var month = months[istTime.getMonth()];
-      var year = istTime.getFullYear();
-      document.getElementById('dateDisplay').textContent =
-        day + ', ' + date + ' ' + month + ' ' + year;
-
-      // Play click sound on every hour change
-      if (lastHour === null) {
-        lastHour = hours;
-      } else if (hours !== lastHour) {
-        var sound = document.getElementById('clickSound');
-        try { sound.currentTime = 0; } catch(e) {}
-        sound.play();
-        lastHour = hours;
-      }
+      pausedTime += now.getTime() - sitStartTime.getTime();
+      isSitting = false;
+      breakBtn.textContent = "Resume";
+      startBtn.disabled = true; // keep start disabled while on break
+      alert("Break started. Sitting time paused.");
+      updateSittingTime();
+    } else {
+      // Resume from break
+      breakActive = false;
+      sitStartTime = new Date(new Date().getTime() - pausedTime);
+      isSitting = true;
+      breakBtn.textContent = "Break";
+      startBtn.disabled = true;
+      endBtn.disabled = false;
+      sittingInterval = setInterval(updateSittingTime, 1000);
+      updateSittingTime();
     }
+  };
 
-    // Update sitting time display
-    function updateSittingTime() {
-      if (!sitStartTime || (!isSitting && !breakActive)) {
-        document.getElementById('sittingTime').textContent = "00:00:00";
-        return;
-      }
-      var now = new Date();
-      var elapsed;
-      if (breakActive && !isSitting) {
-        // On break: show time up to break start (pausedTime only)
-        elapsed = pausedTime;
-      } else {
-        // Calculate elapsed sitting time excluding breaks
-        elapsed = now.getTime() - sitStartTime.getTime() + pausedTime;
-      }
-
-      var hrs = Math.floor(elapsed / (1000 * 60 * 60));
-      var mins = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60));
-      var secs = Math.floor((elapsed % (1000 * 60)) / 1000);
-      document.getElementById('sittingTime').textContent = pad(hrs) + ":" + pad(mins) + ":" + pad(secs);
+  // End Button
+  endBtn.onclick = function() {
+    if (sitStartTime) {
+      clearInterval(sittingInterval);
+      isSitting = false;
+      breakActive = false;
+      pausedTime = 0;
+      startBtn.disabled = false;
+      breakBtn.disabled = true;
+      breakBtn.textContent = "Break";
+      endBtn.disabled = true;
+      alert("Sitting ended. Total time: " + 
+        pad(parseInt(document.getElementById('sit-hrs').textContent)) + ":" +
+        pad(parseInt(document.getElementById('sit-mins').textContent)) + ":" +
+        pad(parseInt(document.getElementById('sit-secs').textContent))
+      );
+      sitStartTime = null;
+      setSittingTimeDisplay(0,0,0);
     }
+  };
 
-    // Get buttons
-    var startBtn = document.getElementById('startSittingBtn');
-    var breakBtn = document.getElementById('breakBtn');
-    var endBtn = document.getElementById('endBtn');
+  // Initialize displays and start clock updates
+  updateClock();
+  setInterval(updateClock, 1000);
+</script>
 
-    // Start Sitting Button
-    startBtn.onclick = function() {
-      if (!isSitting) {
-        sitStartTime = new Date();
-        isSitting = true;
-        breakActive = false;
-        pausedTime = 0;
-        startBtn.disabled = true;
-        breakBtn.disabled = false;
-        breakBtn.textContent = "Break";
-        endBtn.disabled = false;
-        sittingInterval = setInterval(updateSittingTime, 1000);
-        updateSittingTime();
-      }
-    };
-
-    // Break / Resume Button toggle
-    breakBtn.onclick = function() {
-      if (!breakActive) {
-        // Start Break (pause)
-        breakActive = true;
-        clearInterval(sittingInterval);
-        var now = new Date();
-        pausedTime += now.getTime() - sitStartTime.getTime();
-        isSitting = false;
-        breakBtn.textContent = "Resume";
-        startBtn.disabled = true; // keep start disabled while on break
-        alert("Break started. Sitting time paused.");
-        updateSittingTime();
-      } else {
-        // Resume from break
-        breakActive = false;
-        sitStartTime = new Date(new Date().getTime() - pausedTime);
-        isSitting = true;
-        breakBtn.textContent = "Break";
-        startBtn.disabled = true;
-        endBtn.disabled = false;
-        sittingInterval = setInterval(updateSittingTime, 1000);
-        updateSittingTime();
-      }
-    };
-
-    // End Button
-    endBtn.onclick = function() {
-      if (sitStartTime) {
-        clearInterval(sittingInterval);
-        isSitting = false;
-        breakActive = false;
-        pausedTime = 0;
-        startBtn.disabled = false;
-        breakBtn.disabled = true;
-        breakBtn.textContent = "Break";
-        endBtn.disabled = true;
-        alert("Sitting ended. Total time: " + document.getElementById('sittingTime').textContent);
-        sitStartTime = null;
-        document.getElementById('sittingTime').textContent = "00:00:00";
-      }
-    };
-
-    // Initialize clock and sitting time
-    updateClock();
-    setInterval(updateClock, 1000);
-  </script>
 </body>
 </html>
