@@ -55,13 +55,13 @@
     line-height: 1;
     margin: 0 0.15rem;
   }
-  /* Sidebar for sitting time and controls */
+  /* Sidebar for sitting time and controls - adjusted margin-left to prevent overlap */
   .sidebar {
     width: 220px;
     background: #111;
     border-radius: 14px;
     padding: 1rem;
-    margin-left: 1rem;
+    margin-left: 2.5rem; /* Increased margin to move sidebar right */
     box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   }
   .sidebar h2 {
@@ -121,19 +121,27 @@
     <button id="endBtn" disabled>End</button>
   </div>
 
-  <!-- Click sound -->
+  <!-- Click sound (tiny click) -->
   <audio id="clickSound" preload="auto">
     <source src="data:audio/wav;base64,UklGRjQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YYAAAP8AAP//AAD/AAAA/wAA//8AAP8A/wAA/wAA///AAD/+AAD//wAA" type="audio/wav" />
   </audio>
 
   <script>
-    // Simple pad for older Safari
+    // Pad helper for older Safari
     function pad(num) {
       num = String(num);
       return num.length < 2 ? '0' + num : num;
     }
 
-    // IST Time Update
+    // Variables for clock and sitting tracker
+    var lastHour = null;
+    var sitStartTime = null;
+    var sittingInterval = null;
+    var isSitting = false;
+    var pausedTime = 0;      // total paused duration in ms
+    var breakActive = false; // true if currently on break
+
+    // Update IST clock and date
     function updateClock() {
       var now = new Date();
       var utc = now.getTime() + (now.getTimezoneOffset() * 60000);
@@ -154,9 +162,10 @@
       var date = istTime.getDate();
       var month = months[istTime.getMonth()];
       var year = istTime.getFullYear();
-      document.getElementById('dateDisplay').textContent = day + ', ' + date + ' ' + month + ' ' + year;
+      document.getElementById('dateDisplay').textContent =
+        day + ', ' + date + ' ' + month + ' ' + year;
 
-      // Hour change click sound (optional: can keep or remove)
+      // Play click sound on every hour change
       if (lastHour === null) {
         lastHour = hours;
       } else if (hours !== lastHour) {
@@ -167,70 +176,93 @@
       }
     }
 
-    // Sitting time tracker variables
-    var sitStartTime = null;
-    var sittingInterval = null;
-    var isSitting = false;
-    var lastHour = null;
-
+    // Update sitting time display
     function updateSittingTime() {
-      if (!isSitting || !sitStartTime) {
+      if (!sitStartTime || (!isSitting && !breakActive)) {
         document.getElementById('sittingTime').textContent = "00:00:00";
         return;
       }
       var now = new Date();
-      var diff = now.getTime() - sitStartTime.getTime();
-      var hrs = Math.floor(diff / (1000 * 60 * 60));
-      var mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      var secs = Math.floor((diff % (1000 * 60)) / 1000);
+      var elapsed;
+      if (breakActive && !isSitting) {
+        // On break: show time up to break start (pausedTime only)
+        elapsed = pausedTime;
+      } else {
+        // Calculate elapsed sitting time excluding breaks
+        elapsed = now.getTime() - sitStartTime.getTime() + pausedTime;
+      }
+
+      var hrs = Math.floor(elapsed / (1000 * 60 * 60));
+      var mins = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60));
+      var secs = Math.floor((elapsed % (1000 * 60)) / 1000);
       document.getElementById('sittingTime').textContent = pad(hrs) + ":" + pad(mins) + ":" + pad(secs);
     }
 
-    // Button elements
+    // Get buttons
     var startBtn = document.getElementById('startSittingBtn');
     var breakBtn = document.getElementById('breakBtn');
     var endBtn = document.getElementById('endBtn');
 
+    // Start Sitting Button
     startBtn.onclick = function() {
       if (!isSitting) {
         sitStartTime = new Date();
         isSitting = true;
+        breakActive = false;
+        pausedTime = 0;
         startBtn.disabled = true;
         breakBtn.disabled = false;
+        breakBtn.textContent = "Break";
         endBtn.disabled = false;
-        // Start sitting time update interval
         sittingInterval = setInterval(updateSittingTime, 1000);
         updateSittingTime();
       }
     };
 
+    // Break / Resume Button toggle
     breakBtn.onclick = function() {
-      if (isSitting) {
+      if (!breakActive) {
+        // Start Break (pause)
+        breakActive = true;
         clearInterval(sittingInterval);
+        var now = new Date();
+        pausedTime += now.getTime() - sitStartTime.getTime();
         isSitting = false;
-        breakBtn.disabled = true;
-        startBtn.disabled = false;
-        // Optional: alert or mark break started
+        breakBtn.textContent = "Resume";
+        startBtn.disabled = true; // keep start disabled while on break
         alert("Break started. Sitting time paused.");
+        updateSittingTime();
+      } else {
+        // Resume from break
+        breakActive = false;
+        sitStartTime = new Date(new Date().getTime() - pausedTime);
+        isSitting = true;
+        breakBtn.textContent = "Break";
+        startBtn.disabled = true;
+        endBtn.disabled = false;
+        sittingInterval = setInterval(updateSittingTime, 1000);
+        updateSittingTime();
       }
     };
 
+    // End Button
     endBtn.onclick = function() {
       if (sitStartTime) {
         clearInterval(sittingInterval);
         isSitting = false;
+        breakActive = false;
+        pausedTime = 0;
         startBtn.disabled = false;
         breakBtn.disabled = true;
+        breakBtn.textContent = "Break";
         endBtn.disabled = true;
-        updateSittingTime();
         alert("Sitting ended. Total time: " + document.getElementById('sittingTime').textContent);
-        // Reset sitting time
         sitStartTime = null;
         document.getElementById('sittingTime').textContent = "00:00:00";
       }
     };
 
-    // Initialize clock and sitting time display
+    // Initialize clock and sitting time
     updateClock();
     setInterval(updateClock, 1000);
   </script>
